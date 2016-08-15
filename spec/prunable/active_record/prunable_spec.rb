@@ -7,22 +7,20 @@ describe ActiveRecord::Prunable do
     allow(subject).to receive(:logger).and_return(Logger)
   end
 
-  describe "includes" do
+  describe ".includes" do
     it "has array with all prunable models" do
       expect(described_class.includes).to contain_exactly(SomeMixin, AnotherMixin)
     end
   end
 
-  describe "prune_method" do
+  describe ".prune_method" do
     context "incorrect prune method" do
       it "return false" do
         expect(subject.prune_method(123)).to be false
         expect(subject.prune_method(:something)).to be false
       end
 
-      it "not set @@prune_method variable" do
-        expect(subject.class_variable_defined?(:@@prune_method)).to eq(false)
-
+      it "not change @@prune_method variable" do
         expect{ subject.prune_method(:incorrect) }
           .not_to change{ subject.class_variable_defined?(:@@prune_method) }
       end
@@ -34,7 +32,6 @@ describe ActiveRecord::Prunable do
         expect(subject.prune_method(:delete)).to eq(:delete)
       end
 
-
       it "set @@prune_method_variable" do
         subject.prune_method(:destroy)
 
@@ -44,7 +41,7 @@ describe ActiveRecord::Prunable do
     end
   end
 
-  describe "prune!" do
+  describe ".prune!" do
     let(:correct_scope){ ->(){ ActiveRecord::Relation.new(FakeActiveRecord, FakeActiveRecord.arel_table) } }
     let(:incorrect_scope){ ->(){ 123 } }
 

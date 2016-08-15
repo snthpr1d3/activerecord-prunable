@@ -55,6 +55,12 @@ Pruning multiple models:
 Prunable.prune!(SomeModel, AnotherModel)
 ```
 
+Set default method of pruning (:destroy or :delete):
+
+```ruby
+Prunable.prune!(prune_method: :delete)
+```
+
 Getting an array of all models that include `ActiveRecord::Prunable`:
 
 ```ruby
