@@ -63,7 +63,7 @@ describe ActiveRecord::Prunable do
         allow(subject).to receive(:defined?).and_return(false)
       end
 
-      let(:prune_result){ double(any?: false) }
+      let(:prune_result){ 0 }
 
       it "return result of .prune_by_method" do
         allow(subject).to receive(:prune_by_method).and_return(prune_result)
@@ -73,7 +73,7 @@ describe ActiveRecord::Prunable do
       end
 
       context "prune method was set" do
-        let(:prunable){ double(is_a?: true, destroy_all: [], delete_all: []) }
+        let(:prunable){ double(is_a?: true, destroy_all: [], delete_all: 0) }
 
         before do
           allow(subject).to receive(:prunable).and_return(prunable)
