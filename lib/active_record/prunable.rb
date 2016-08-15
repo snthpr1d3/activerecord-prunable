@@ -18,20 +18,21 @@ module ActiveRecord
     end
 
     module ClassMethods
+      def prune_method(method)
+        unless [:destroy, :delete].include?(method)
+          logger.info "Incorrect prune method #{method} will be ignored"
+          return false
+        end
+
+        logger.info "Prune method #{method} was successfully setted"
+        class_variable_set(:@@prune_method, method)
+      end
+
       def prune!
         logger.info "Pruning old records of #{self}"
+        return false unless check_scope
 
-        unless respond_to?(:prunable)
-          logger.info "This model has no :prunable scope, nothing to prune."
-          return
-        end
-
-        unless prunable.is_a?(::ActiveRecord::Relation)
-          logger.info ":prunable is not a relation, nothing to prune."
-          return
-        end
-
-        destroyed = prunable.destroy_all
+        destroyed = prune_by_method
 
         if destroyed.any?
           logger.info "#{destroyed.size} records have been pruned."
@@ -40,6 +41,38 @@ module ActiveRecord
         end
 
         destroyed
+      end
+
+      private
+
+      def check_scope
+        unless respond_to?(:prunable)
+          logger.info "This model has no :prunable scope, nothing to prune."
+          return false
+        end
+
+        unless prunable.is_a?(::ActiveRecord::Relation)
+          logger.info ":prunable is not a relation, nothing to prune."
+          return false
+        end
+
+        true
+      end
+
+      def prune_by_method
+        unless class_variable_defined?(:@@prune_method)
+          prune_method = :destroy
+        else
+          prune_method = class_variable_get(:@@prune_method)
+        end
+
+        logger.info "Prune method is #{prune_method}"
+
+        if prune_method == :delete
+          prunable.delete_all
+        else
+          prunable.destroy_all
+        end
       end
     end
   end

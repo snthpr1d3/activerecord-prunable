@@ -3,20 +3,50 @@ require 'spec_helper'
 describe ActiveRecord::Prunable do
   subject{ SomeMixin }
 
+  before do
+    allow(subject).to receive(:logger).and_return(Logger)
+  end
+
   describe "includes" do
     it "has array with all prunable models" do
       expect(described_class.includes).to contain_exactly(SomeMixin, AnotherMixin)
     end
   end
 
-  describe "prune!" do
-    before do
-      allow(subject).to receive(:logger).and_return(logger)
+  describe "prune_method" do
+    context "incorrect prune method" do
+      it "return false" do
+        expect(subject.prune_method(123)).to be false
+        expect(subject.prune_method(:something)).to be false
+      end
+
+      it "not set @@prune_method variable" do
+        expect(subject.class_variable_defined?(:@@prune_method)).to eq(false)
+
+        expect{ subject.prune_method(:incorrect) }
+          .not_to change{ subject.class_variable_defined?(:@@prune_method) }
+      end
     end
 
+    context "correct prune method" do
+      it "return method name" do
+        expect(subject.prune_method(:destroy)).to eq(:destroy)
+        expect(subject.prune_method(:delete)).to eq(:delete)
+      end
+
+
+      it "set @@prune_method_variable" do
+        subject.prune_method(:destroy)
+
+        expect{ subject.prune_method(:delete) }
+          .to change{ subject.class_variable_get(:@@prune_method) }.from(:destroy).to(:delete)
+      end
+    end
+  end
+
+  describe "prune!" do
     let(:correct_scope){ ->(){ ActiveRecord::Relation.new(FakeActiveRecord, FakeActiveRecord.arel_table) } }
     let(:incorrect_scope){ ->(){ 123 } }
-    let(:logger){ Logger }
 
     context "when scope is empty" do
       it "raise error when scope result is not ActiveRecord::Relation" do
@@ -30,26 +60,43 @@ describe ActiveRecord::Prunable do
     context "when scope is correct" do
       before do
         subject.scope(:prunable, correct_scope)
+        allow(subject).to receive(:defined?).and_return(false)
       end
 
-      it "call destroy_all if scope not empty" do
-        allow_any_instance_of(ActiveRecord::Relation).to receive(:destroy_all).and_return([:some_result])
-        allow_any_instance_of(ActiveRecord::Relation).to receive(:present?).and_return(true)
-        expect_any_instance_of(ActiveRecord::Relation).to receive(:destroy_all)
-        expect(subject.prune!).to eq([:some_result])
-      end
+      let(:prune_result){ double(any?: false) }
 
-      it "if scope empty" do
+      it "return result of .prune_by_method" do
+        allow(subject).to receive(:prune_by_method).and_return(prune_result)
         allow_any_instance_of(ActiveRecord::Relation).to receive(:present?).and_return(false)
-        allow_any_instance_of(ActiveRecord::Relation).to receive(:destroy_all).and_return([])
-        expect(subject.prune!).to eq([])
+        expect(subject).to receive(:prune_by_method)
+        expect(subject.prune!).to eq(prune_result)
+      end
+
+      context "prune method was set" do
+        let(:prunable){ double(is_a?: true, destroy_all: [], delete_all: []) }
+
+        before do
+          allow(subject).to receive(:prunable).and_return(prunable)
+        end
+
+        it "remove records by destroy_all" do
+          subject.prune_method(:destroy)
+          expect(prunable).to receive(:destroy_all)
+          subject.prune!
+        end
+
+        it "remove records by delete_all" do
+          subject.prune_method(:delete)
+          expect(prunable).to receive(:delete_all)
+          subject.prune!
+        end
       end
     end
 
     context "when scope is incorrect" do
-      it "return nil" do
+      it "return false" do
         subject.scope(:prunable, incorrect_scope)
-        expect(subject.prune!).to be_nil
+        expect(subject.prune!).to be false
       end
     end
   end

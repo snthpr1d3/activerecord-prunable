@@ -13,13 +13,14 @@ describe Prunable do
   end
 
   context "removal" do
+    let(:remove_result){ double(any?: true, size: :size) }
+    let(:scope){ double(present?: true, destroy_all: remove_result, delete_all: remove_result) }
     let(:logger){ Logger }
 
     before do
       allow(SomeMixin).to receive(:logger).and_return(logger)
       allow(AnotherMixin).to receive(:logger).and_return(logger)
-      allow_any_instance_of(ActiveRecord::Relation).to receive(:present?).and_return(true)
-      allow_any_instance_of(ActiveRecord::Relation).to receive(:destroy_all).and_return(:some_result)
+      allow(ActiveRecord::Base).to receive(:prunable).and_return(scope)
     end
 
     describe "prune!" do

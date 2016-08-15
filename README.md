@@ -24,6 +24,10 @@ gem "activerecord-prunable"
 
      scope :prunable, -> { where("created_at > ?", 1.month.ago) }
 
+     # You can also set type of removing records (:destroy or :delete).
+     # By default it's :destroy
+     prune_method :delete
+
    end
    ```
 
