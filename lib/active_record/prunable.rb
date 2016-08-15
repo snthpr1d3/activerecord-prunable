@@ -34,8 +34,8 @@ module ActiveRecord
 
         destroyed = prune_by_method
 
-        if destroyed.any?
-          logger.info "#{destroyed.size} records have been pruned."
+        if destroyed > 0
+          logger.info "#{destroyed} records have been pruned."
         else
           logger.info "Nothing to prune."
         end
@@ -71,7 +71,7 @@ module ActiveRecord
         if prune_method == :delete
           prunable.delete_all
         else
-          prunable.destroy_all
+          prunable.destroy_all.size
         end
       end
     end
