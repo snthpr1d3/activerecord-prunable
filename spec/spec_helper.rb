@@ -1,5 +1,6 @@
 $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'activerecord-prunable'
+require 'byebug'
 
 class SomeMixin < ActiveRecord::Base
   include ActiveRecord::Prunable
