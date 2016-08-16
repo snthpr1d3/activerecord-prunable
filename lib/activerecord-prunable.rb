@@ -9,14 +9,10 @@ module Prunable
       ActiveRecord::Prunable.includes
     end
 
-    def prune!(*models, prune_method: nil)
+    def prune!(*models, prune_method: nil, params: [])
       models = self.models if models.empty?
       models.each do |model|
-        if prune_method && !model.class_variable_defined?(:@@prune_method)
-          model.prune_method(prune_method)
-        end
-
-        model.prune!
+        model.prune!(*params, prune_method: prune_method)
       end
     end
   end

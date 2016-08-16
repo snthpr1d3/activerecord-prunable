@@ -61,6 +61,12 @@ Set default method of pruning (:destroy or :delete):
 Prunable.prune!(prune_method: :delete)
 ```
 
+Call `:prunable` scope with params:
+
+```ruby
+Prunable.prune!(params: [:foo, :bar])
+```
+
 Getting an array of all models that include `ActiveRecord::Prunable`:
 
 ```ruby

@@ -72,6 +72,18 @@ describe Prunable do
         expect(another_mixin_prunable).to receive(:destroy_all).and_return([])
         described_class.prune!(prune_method: :destroy)
       end
+
+      it "call destroy_all by defaults if not set another" do
+        expect(some_mixin_prunable).to receive(:destroy_all).and_return([])
+        expect(another_mixin_prunable).to receive(:destroy_all).and_return([])
+        described_class.prune!
+      end
+    end
+
+    it "call scope with params" do
+      expect(SomeMixin).to receive(:prunable).with(:foo, :bar)
+      expect(AnotherMixin ).to receive(:prunable).with(:foo, :bar)
+      described_class.prune!(params: [:foo, :bar])
     end
   end
 end

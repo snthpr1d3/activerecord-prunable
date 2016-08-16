@@ -44,6 +44,7 @@ describe ActiveRecord::Prunable do
   describe ".prune!" do
     let(:correct_scope){ ->(){ ActiveRecord::Relation.new(FakeActiveRecord, FakeActiveRecord.arel_table) } }
     let(:incorrect_scope){ ->(){ 123 } }
+    let(:prunable){ double(is_a?: true, destroy_all: [], delete_all: 0) }
 
     context "when scope is empty" do
       it "raise error when scope result is not ActiveRecord::Relation" do
@@ -70,8 +71,6 @@ describe ActiveRecord::Prunable do
       end
 
       context "prune method was set" do
-        let(:prunable){ double(is_a?: true, destroy_all: [], delete_all: 0) }
-
         before do
           allow(subject).to receive(:prunable).and_return(prunable)
         end
@@ -86,6 +85,17 @@ describe ActiveRecord::Prunable do
           subject.prune_method(:delete)
           expect(prunable).to receive(:delete_all)
           subject.prune!
+        end
+      end
+      
+      context "with params" do
+        before do
+          allow(subject).to receive(:prunable).and_return(prunable)
+        end
+
+        it "call scope with params" do
+          expect(subject).to receive(:prunable).with(:foo, :bar).and_return(:result)
+          subject.prune!(:foo, :bar)
         end
       end
     end
