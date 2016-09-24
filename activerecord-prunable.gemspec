@@ -9,6 +9,8 @@ Gem::Specification.new do |spec|
 
   spec.files         = Dir.glob('**/*').reject{|f| f.match(%r{^(spec)/}) }
 
+  spec.required_ruby_version = "~> 2.0"
+
   spec.add_development_dependency "rspec", "~> 3.0"
   spec.add_development_dependency "byebug"
 
