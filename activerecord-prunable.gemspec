@@ -10,9 +10,8 @@ Gem::Specification.new do |spec|
   spec.files         = Dir.glob('**/*').reject{|f| f.match(%r{^(spec)/}) }
 
   spec.add_development_dependency "rspec", "~> 3.0"
-
-  spec.add_dependency "activerecord"
-  spec.add_dependency "activesupport"
-
   spec.add_development_dependency "byebug"
+
+  spec.add_dependency "activerecord", ">= 3.0", "< 5.0"
+  spec.add_dependency "activesupport", ">= 3.0", "< 5.0"
 end
