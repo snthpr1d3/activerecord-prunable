@@ -21,7 +21,7 @@ module ActiveRecord
       def prune_method(method)
         return false unless check_prune_method(method)
 
-        logger.info "Prune method #{method} was successfully setted for #{self}"
+        logger.info "Prune method #{method} has been set for #{self}"
         class_variable_set(:@@prune_method, method)
       end
 
