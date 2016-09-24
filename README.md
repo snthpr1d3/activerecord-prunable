@@ -1,3 +1,5 @@
+[![Gem Version](https://badge.fury.io/rb/activerecord-prunable.svg)](https://badge.fury.io/rb/activerecord-prunable)  
+
 # Description
 
 Convenient removal of obsolete ActiveRecord models.
