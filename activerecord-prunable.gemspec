@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = "activerecord-prunable"
-  spec.version       = "0.2.1"
+  spec.version       = "0.2.2"
   spec.authors       = ["dr2m"]
   spec.email         = ["maletin@maletin.work"]
 
