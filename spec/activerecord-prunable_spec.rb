@@ -1,21 +1,23 @@
+# frozen_string_literal: true
+
 require 'spec_helper'
 
 describe Prunable do
-  describe ".models" do
-    it "call rails force load classes when first call" do
+  describe '.models' do
+    it 'gets rails to load classes forcely fot the first time' do
       expect(Rails.application).to receive(:eager_load!)
       described_class.models
     end
 
-    it "find all mixed classes" do
+    it 'finds all mixed classes' do
       expect(described_class.models).to contain_exactly(SomeMixin, AnotherMixin)
     end
   end
 
-  describe ".prune!" do
-    let(:remove_result){ double(any?: true, size: :size) }
-    let(:scope){ double(present?: true, destroy_all: remove_result, delete_all: remove_result) }
-    let(:logger){ Logger }
+  describe '.prune!' do
+    let(:remove_result) { double(any?: true, size: :size) }
+    let(:scope) { double(present?: true, destroy_all: remove_result, delete_all: remove_result) }
+    let(:logger) { Logger }
 
     before do
       allow(SomeMixin).to receive(:logger).and_return(logger)
@@ -23,26 +25,26 @@ describe Prunable do
       allow(ActiveRecord::Base).to receive(:prunable).and_return(scope)
     end
 
-    it "don't call rails force load classes when another call" do
+    it "doesn't call rails force load classes when another call" do
       expect(Rails.application).not_to receive(:eager_load!)
       described_class.prune!
     end
 
-    it "call prune! for mixed classes" do
+    it 'calls prune! for mixed classes' do
       expect(SomeMixin).to receive(:prune!)
       expect(AnotherMixin).to receive(:prune!)
       described_class.prune!
     end
 
-    it "call prune! only for selected classes" do
+    it 'calls prune! only for selected classes' do
       expect(SomeMixin).to receive(:prune!)
       expect(AnotherMixin).not_to receive(:prune!)
       described_class.prune!(SomeMixin)
     end
 
-    context "default remove method" do
-      let(:some_mixin_prunable){ double }
-      let(:another_mixin_prunable){ double }
+    context 'default remove method' do
+      let(:some_mixin_prunable) { double }
+      let(:another_mixin_prunable) { double }
 
       before do
         allow(SomeMixin).to receive(:prunable).and_return(some_mixin_prunable)
@@ -59,28 +61,28 @@ describe Prunable do
         end
       end
 
-      it "call delete_all by defaults if not set :destroy" do
+      it "calls delete_all by default if :destroy isn't set" do
         SomeMixin.prune_method :destroy
         expect(some_mixin_prunable).to receive(:destroy_all).and_return([])
         expect(another_mixin_prunable).to receive(:delete_all).and_return(0)
         described_class.prune!(prune_method: :delete)
       end
 
-      it "call destroy_all by defaults if not set :delete" do
+      it "calls destroy_all by default if :delete isn't set" do
         SomeMixin.prune_method :delete
         expect(some_mixin_prunable).to receive(:delete_all).and_return(0)
         expect(another_mixin_prunable).to receive(:destroy_all).and_return([])
         described_class.prune!(prune_method: :destroy)
       end
 
-      it "call destroy_all by defaults if not set another" do
+      it "calls destroy_all by default if another isn't set" do
         expect(some_mixin_prunable).to receive(:destroy_all).and_return([])
         expect(another_mixin_prunable).to receive(:destroy_all).and_return([])
         described_class.prune!
       end
     end
 
-    it "call scope with params" do
+    it 'calls scope with params' do
       expect(SomeMixin).to receive(:prunable).with(:foo, :bar)
       expect(AnotherMixin ).to receive(:prunable).with(:foo, :bar)
       described_class.prune!(params: [:foo, :bar])
