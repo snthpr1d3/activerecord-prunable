@@ -15,7 +15,7 @@ describe Prunable do
   end
 
   describe '.prune!' do
-    let(:remove_result) { double(any?: true, size: :size) }
+    let(:remove_result) { double(any?: true, size: 0) }
     let(:scope) { double(present?: true, destroy_all: remove_result, delete_all: remove_result) }
     let(:logger) { Logger }
 
@@ -83,8 +83,8 @@ describe Prunable do
     end
 
     it 'calls scope with params' do
-      expect(SomeMixin).to receive(:prunable).with(:foo, :bar)
-      expect(AnotherMixin ).to receive(:prunable).with(:foo, :bar)
+      expect(SomeMixin).to receive(:prunable).with(:foo, :bar).and_return(double.as_null_object)
+      expect(AnotherMixin ).to receive(:prunable).with(:foo, :bar).and_return(double.as_null_object)
       described_class.prune!(params: [:foo, :bar])
     end
   end

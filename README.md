@@ -2,9 +2,6 @@
 
 Convenient removal of obsolete ActiveRecord models.
 
-## Attention
-  Note that the gem calls `Rails.application.eager_load!`. It can decrease free memory size.
-
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -24,10 +21,9 @@ Or install it yourself as:
 
 ## Usage
 
-1. Include the `Prunable` module in the ActiveRecord model which needs to be pruned.
-2. Define the `:prunable` scope which returns models to prune.
+__1. Include the `Prunable` module in the ActiveRecord model which needs to be pruned.__  
 
-   Example:
+__2. Define the `:prunable` scope which returns models to prune.__
 
    ```ruby
    class Notification < ApplicationRecord
@@ -41,7 +37,21 @@ Or install it yourself as:
    end
    ```
 
-3. Add a `Prunable.prune!` call to a periodic task.
+   or use one of the `prune_after`, `prune_created_after`, `prune_updated_after` methods  
+
+   ```ruby
+   class Notification < ApplicationRecord
+     include ActiveRecord::Prunable
+
+      prune_after 7.days
+   end
+   ```
+
+   `prune_after` is an alias for `prune_created_after`  
+   `prune_created_after(TTL)` defines `where('created_at < ?', current_time - TTL)` prunable scope  
+   `prune_updated_after(TTL)` defines `where('updated_at < ?', current_time - TTL)` prunable scope  
+
+__3. Add a `Prunable.prune!` call to a periodic task.__
 
    Example:
 
@@ -51,38 +61,41 @@ Or install it yourself as:
    every(1.day, 'models.prune', at: '04:20', thread: true) { Prunable.prune! }
    ```
 
+   You can also inject current time `Prunable.prune!(current_time: Time.current)`
+
 # Advanced Usage
 
-Pruning a single model:
+__Pruning a single model:__
 
 ```ruby
 SomeModel.prune!
 ```
 
-Pruning multiple models:
+__Pruning multiple models:__  
+Note that the `Prunable.prune!` calls `Rails.application.eager_load!`. It can decrease free memory size.  
 
 ```ruby
 Prunable.prune!(SomeModel, AnotherModel)
 ```
 
-Set default method of pruning (:destroy or :delete):
+__Set default method of pruning (:destroy or :delete):__  
 
 ```ruby
 Prunable.prune!(prune_method: :delete)
 ```
 
-Call `:prunable` scope with params:
+__Call `:prunable` scope with params:__  
 
 ```ruby
 Prunable.prune!(params: [:foo, :bar])
 ```
 
-Getting an array of all the models which include `ActiveRecord::Prunable`:  
+__Getting an array of all the models which include `ActiveRecord::Prunable`:__  
 ```ruby
 Prunable.models
 ```
 
-Pruning all models which include `ActiveRecord::Prunable`:
+__Pruning all models which include `ActiveRecord::Prunable`:__  
 
 ```ruby
 Prunable.prune!
