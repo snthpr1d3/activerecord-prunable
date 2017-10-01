@@ -1,27 +1,36 @@
-[![Gem Version](https://badge.fury.io/rb/activerecord-prunable.svg)](https://badge.fury.io/rb/activerecord-prunable) [![Build Status](https://travis-ci.org/dr2m/activerecord-prunable.svg?branch=master)](https://travis-ci.org/dr2m/activerecord-prunable) [![Code Climate](https://codeclimate.com/github/dr2m/activerecord-prunable/badges/gpa.svg)](https://codeclimate.com/github/dr2m/activerecord-prunable)   
-
-# Description
+# Activerecord-prunable [![Gem Version](https://badge.fury.io/rb/activerecord-prunable.svg)](https://badge.fury.io/rb/activerecord-prunable) [![Build Status](https://travis-ci.org/dr2m/activerecord-prunable.svg?branch=master)](https://travis-ci.org/dr2m/activerecord-prunable) [![Code Climate](https://codeclimate.com/github/dr2m/activerecord-prunable/badges/gpa.svg)](https://codeclimate.com/github/dr2m/activerecord-prunable)  
 
 Convenient removal of obsolete ActiveRecord models.
 
-# Installation
+## Attention
+  Note that the gem calls `Rails.application.eager_load!`. It can decrease free memory size.
+
+## Installation
+
+Add this line to your application's Gemfile:
 
 ```ruby
-# Gemfile
-
-gem "activerecord-prunable"
+gem 'activerecord-prunable'
 ```
 
-# Usage
+And then execute:
 
-1. Include the `Prunable` module in the ActiveRecord model that needs to be pruned.
-2. Define the `:prunable` scope that returns models to prune.
+    $ bundle
+
+Or install it yourself as:
+
+    $ gem install activerecord-prunable
+
+
+## Usage
+
+1. Include the `Prunable` module in the ActiveRecord model which needs to be pruned.
+2. Define the `:prunable` scope which returns models to prune.
 
    Example:
 
    ```ruby
    class Notification < ApplicationRecord
-
      include ActiveRecord::Prunable
 
      scope :prunable, -> { where("created_at > ?", 1.month.ago) }
@@ -29,7 +38,6 @@ gem "activerecord-prunable"
      # You can also set type of removing records (:destroy or :delete).
      # By default it's :destroy
      prune_method :delete
-
    end
    ```
 
@@ -69,13 +77,12 @@ Call `:prunable` scope with params:
 Prunable.prune!(params: [:foo, :bar])
 ```
 
-Getting an array of all models that include `ActiveRecord::Prunable`:
-
+Getting an array of all the models which include `ActiveRecord::Prunable`:  
 ```ruby
 Prunable.models
 ```
 
-Pruning all models that include `ActiveRecord::Prunable`:
+Pruning all models which include `ActiveRecord::Prunable`:
 
 ```ruby
 Prunable.prune!
