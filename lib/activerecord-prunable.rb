@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_record/prunable'
 
 module Prunable
@@ -11,6 +13,7 @@ module Prunable
 
     def prune!(*models, prune_method: nil, params: [])
       models = self.models if models.empty?
+
       models.each do |model|
         model.prune!(*params, prune_method: prune_method)
       end

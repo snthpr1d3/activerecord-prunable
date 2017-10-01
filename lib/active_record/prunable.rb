@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_support'
 require 'active_record'
 
@@ -19,7 +21,10 @@ module ActiveRecord
 
     module ClassMethods
       def prune_method(method)
-        return false unless check_prune_method(method)
+        unless check_prune_method(method)
+          logger.info "Incorrect prune method #{method} has been ignored for #{self}"
+          return false
+        end
 
         logger.info "Prune method #{method} has been set for #{self}"
         class_variable_set(:@@prune_method, method)
@@ -30,27 +35,27 @@ module ActiveRecord
         return false unless check_scope(*params)
 
         scope = prunable(*params)
-        destroyed = prune_by_method(scope, prune_method)
+        destroyed_records = prune_by_method(scope, prune_method)
 
-        if destroyed > 0
-          logger.info "#{destroyed} records have been pruned."
+        if destroyed_records.positive?
+          logger.info "#{destroyed_records} records have been removed."
         else
-          logger.info "Nothing to prune."
+          logger.info 'Nothing to prune.'
         end
 
-        destroyed
+        destroyed_records
       end
 
       private
 
       def check_scope(*params)
         unless respond_to?(:prunable)
-          logger.info "This model has no :prunable scope, nothing to prune."
+          logger.info "The model hasn't got prunable scope, action is not allowed."
           return false
         end
 
         unless prunable(*params).is_a?(::ActiveRecord::Relation)
-          logger.info ":prunable is not a relation, nothing to prune."
+          logger.info 'Model.prunable is not a relation, action is not allowed.'
           return false
         end
 
@@ -58,29 +63,22 @@ module ActiveRecord
       end
 
       def check_prune_method(method)
-        unless [:destroy, :delete].include?(method)
-          logger.info "Incorrect prune method #{method} will be ignored for #{self}"
-          return false
-        end
-        true
+        %i[destroy delete].include?(method)
       end
 
       def prune_by_method(scope, prune_method)
-        unless class_variable_defined?(:@@prune_method)
-          prune_method = prune_method || :destroy
-        else
-          prune_method = class_variable_get(:@@prune_method)
-        end
+        prune_method = if class_variable_defined?(:@@prune_method)
+                         class_variable_get(:@@prune_method)
+                       else
+                         prune_method || :destroy
+                       end
 
         return false unless check_prune_method(prune_method)
 
         logger.info "Prune method is #{prune_method}"
 
-        if prune_method == :delete
-          scope.delete_all
-        else
-          scope.destroy_all.size
-        end
+        return scope.delete_all if prune_method == :delete
+        scope.destroy_all.size
       end
     end
   end
