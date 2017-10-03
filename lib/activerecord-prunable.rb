@@ -11,11 +11,11 @@ module Prunable
       ActiveRecord::Prunable.includes
     end
 
-    def prune!(*models, prune_method: nil, params: [])
+    def prune!(*models, prune_method: nil, current_time: nil, params: [])
       models = self.models if models.empty?
 
       models.each do |model|
-        model.prune!(*params, prune_method: prune_method)
+        model.prune!(*params, prune_method: prune_method, current_time: current_time)
       end
     end
   end
