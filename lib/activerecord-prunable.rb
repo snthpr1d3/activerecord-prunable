@@ -14,9 +14,18 @@ module Prunable
     def prune!(*models, prune_method: nil, current_time: nil, params: [])
       models = self.models if models.empty?
 
+      pruned = {}
+      errors = []
+
       models.each do |model|
-        model.prune!(*params, prune_method: prune_method, current_time: current_time)
+        begin
+          pruned[model.table_name] = model.prune!(*params, prune_method: prune_method, current_time: current_time)
+        rescue => e
+          errors << e
+        end
       end
+
+      [pruned, errors]
     end
   end
 end
