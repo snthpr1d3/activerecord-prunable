@@ -30,14 +30,20 @@ module ActiveRecord
         class_variable_set(:@@prune_method, method)
       end
 
-      def prune_created_after(duration)
+      def prune_created_after(duration, batch_removal: nil, remove_in_batches: nil)
         class_variable_set(:@@prune_created_after, duration)
+
+        batch_removal_arg = batch_removal || remove_in_batches
+        batch_removal(batch_removal_arg) if batch_removal_arg
       end
 
       alias prune_after prune_created_after
 
-      def prune_updated_after(duration)
+      def prune_updated_after(duration, batch_removal: nil, remove_in_batches: nil)
         class_variable_set(:@@prune_updated_after, duration)
+
+        batch_removal_arg = batch_removal || remove_in_batches
+        batch_removal(batch_removal_arg) if batch_removal_arg
       end
 
       def prune!(*params, prune_method: nil, current_time: nil, batch_size: nil, in_batches: false)
@@ -58,9 +64,11 @@ module ActiveRecord
         destroyed_records
       end
 
-      def batch_removal(batch_size = 1000)
+      def batch_removal(batch_size = nil)
+        batch_size = 1000 unless batch_size.is_a?(Integer)
         class_variable_set(:@@prunable_batch_size, batch_size)
       end
+      alias remove_in_batches batch_removal
 
       private
 
