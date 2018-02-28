@@ -38,6 +38,7 @@ __2. Define the `:prunable` scope which returns models to prune.__
      # Additional method to set removing in batches.
      # You're also able to specify batch size with number
      batch_removal
+     # You can use alias :remove_in_batches
    end
    ```
 
@@ -48,6 +49,10 @@ __2. Define the `:prunable` scope which returns models to prune.__
      include ActiveRecord::Prunable
 
      prune_after 7.days
+
+     # You're also able to define batch removal:
+     # Prune_after 7.days, remove_in_batches: true or
+     # Prune_after 7.days, batch_removal: 100
    end
    ```
 
