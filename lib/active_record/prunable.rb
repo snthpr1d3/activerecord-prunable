@@ -21,7 +21,7 @@ module ActiveRecord
 
     module ClassMethods
       def prune_method(method)
-        unless check_prune_method(method)
+        unless valid_prune_method?(method)
           logger.info "Incorrect prune method #{method} has been ignored for #{self}"
           return false
         end
@@ -30,29 +30,28 @@ module ActiveRecord
         class_variable_set(:@@prune_method, method)
       end
 
-      def prune_after(duration)
-        prune_created_after(duration)
-      end
-
       def prune_created_after(duration)
         class_variable_set(:@@prune_created_after, duration)
       end
+
+      alias prune_after prune_created_after
 
       def prune_updated_after(duration)
         class_variable_set(:@@prune_updated_after, duration)
       end
 
-      def prune!(*params, prune_method: nil, current_time: nil)
+      def prune!(*params, prune_method: nil, current_time: nil, batch_size: nil, in_batches: false)
         logger.info "Pruning old records of #{self}"
-        return false unless check_scope(*params)
+        return false unless prunable_model?
 
         scope = resolve_scope(*params, current_time)
-        destroyed_records = prune_by_method(scope, prune_method)
+        batch_size ||= 1000 if in_batches
+        destroyed_records = prune(scope, prune_method, batch_size)
 
-        if destroyed_records > 0
-          logger.info "#{destroyed_records} records have been removed."
-        else
+        if destroyed_records.zero?
           logger.info 'Nothing to prune.'
+        else
+          logger.info "#{destroyed_records} records have been removed."
         end
 
         destroyed_records
@@ -60,7 +59,7 @@ module ActiveRecord
 
       private
 
-      def check_scope(*params)
+      def prunable_model?
         pruning_means_count = [
           respond_to?(:prunable),
           class_variable_defined?(:@@prune_created_after),
@@ -83,33 +82,48 @@ module ActiveRecord
       def resolve_scope(*params, current_time)
         current_time ||= Time.current
 
-        case
-        when respond_to?(:prunable)
+        if respond_to?(:prunable)
           prunable(*params)
-        when class_variable_defined?(:@@prune_created_after)
+        elsif class_variable_defined?(:@@prune_created_after)
           where('created_at < ?', current_time - class_variable_get(:@@prune_created_after))
-        when class_variable_defined?(:@@prune_updated_after)
+        elsif class_variable_defined?(:@@prune_updated_after)
           where('updated_at < ?', current_time - class_variable_get(:@@prune_updated_after))
         end
       end
 
-      def check_prune_method(method)
+      def valid_prune_method?(method)
         %i[destroy delete].include?(method)
       end
 
-      def prune_by_method(scope, prune_method)
-        prune_method = if class_variable_defined?(:@@prune_method)
-                         class_variable_get(:@@prune_method)
-                       else
-                         prune_method || :destroy
-                       end
-
-        return false unless check_prune_method(prune_method)
+      def prune(scope, prune_method, batch_size)
+        prune_method = resolve_prune_method(prune_method)
+        return false unless valid_prune_method?(prune_method)
 
         logger.info "Prune method is #{prune_method}"
 
-        return scope.delete_all if prune_method == :delete
-        scope.destroy_all.size
+        pruner = pruner_for(prune_method)
+        return pruner.call(scope) unless batch_size
+
+        logger.info "Removing in batches, batch_size: #{batch_size}"
+
+        scope.find_in_batches(batch_size: batch_size) do |batch|
+          batch_ids = batch.map(&:id)
+          relation = scope.model.where(id: batch_ids)
+          pruner.call(relation)
+        end.sum
+      end
+
+      def resolve_prune_method(prune_method)
+        return class_variable_get(:@@prune_method) if class_variable_defined?(:@@prune_method)
+        prune_method || :destroy
+      end
+
+      def pruner_for(prune_method)
+        if prune_method == :delete
+          :delete_all.to_proc
+        else
+          ->(scope) { scope.destroy_all.size }
+        end
       end
     end
   end

@@ -62,10 +62,10 @@ describe ActiveRecord::Prunable do
     let(:incorrect_scope) { ->() { 123 } }
     let(:prunable) { double(is_a?: true, destroy_all: [], delete_all: 0) }
 
-    it 'returns result of .prune_by_method' do
+    it 'returns result of .prune' do
       prune_result = double(:prune_result).as_null_object
       allow(subject).to receive(:prunable).and_return(correct_scope)
-      allow(subject).to receive(:prune_by_method).and_return(prune_result)
+      allow(subject).to receive(:prune).and_return(prune_result)
       expect(subject.prune!).to eq(prune_result)
     end
 
@@ -161,6 +161,22 @@ describe ActiveRecord::Prunable do
         subject.prune_method(:delete)
         expect(prunable).to receive(:delete_all)
         subject.prune!
+      end
+    end
+
+    context 'batch removal' do
+      let(:scope) { double(:scope) }
+
+      before do
+        allow(subject).to receive(:prunable).and_return(scope)
+      end
+
+      it 'removes in batches' do
+        expect(scope).to receive(:find_in_batches)
+          .with(batch_size: 1000)
+          .and_return([1, 2, 3])
+
+        expect(subject.prune!(in_batches: true)).to be 6
       end
     end
   end
