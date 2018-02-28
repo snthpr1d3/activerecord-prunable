@@ -49,8 +49,8 @@ module Prunable
         *params,
         prune_method: prune_method,
         current_time: current_time,
-        batch_size: nil,
-        in_batches: false
+        batch_size: batch_size,
+        in_batches: in_batches
       )
     end
   end
