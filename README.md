@@ -84,6 +84,12 @@ __Set default method of pruning (:destroy or :delete):__
 Prunable.prune!(prune_method: :delete)
 ```
 
+__Batch removal:__
+```ruby
+Prunable.prune!(in_batches: true)
+```
+You're also able to specify the batch size: `Prunable.prune!(batch_size: 100)`
+
 __Call `:prunable` scope with params:__
 
 ```ruby
