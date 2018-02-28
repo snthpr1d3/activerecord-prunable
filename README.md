@@ -34,6 +34,10 @@ __2. Define the `:prunable` scope which returns models to prune.__
      # You can also set type of removing records (:destroy or :delete).
      # By default it's :destroy
      prune_method :delete
+     
+     # Additional method to set removing in batches.
+     # You're also able to specify batch size with number
+     batch_removal
    end
    ```
 
@@ -43,7 +47,7 @@ __2. Define the `:prunable` scope which returns models to prune.__
    class Notification < ApplicationRecord
      include ActiveRecord::Prunable
 
-      prune_after 7.days
+     prune_after 7.days
    end
    ```
 

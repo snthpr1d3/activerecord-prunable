@@ -45,6 +45,7 @@ module ActiveRecord
         return false unless prunable_model?
 
         scope = resolve_scope(*params, current_time)
+        batch_size ||= class_variable_get(:@@prunable_batch_size) if class_variable_defined?(:@@prunable_batch_size)
         batch_size ||= 1000 if in_batches
         destroyed_records = prune(scope, prune_method, batch_size)
 
@@ -55,6 +56,10 @@ module ActiveRecord
         end
 
         destroyed_records
+      end
+
+      def batch_removal(batch_size = 1000)
+        class_variable_set(:@@prunable_batch_size, batch_size)
       end
 
       private
@@ -106,11 +111,13 @@ module ActiveRecord
 
         logger.info "Removing in batches, batch_size: #{batch_size}"
 
-        scope.find_in_batches(batch_size: batch_size) do |batch|
+        batch_results = scope.find_in_batches(batch_size: batch_size) do |batch|
           batch_ids = batch.map(&:id)
           relation = scope.model.where(id: batch_ids)
           pruner.call(relation)
-        end.sum
+        end
+
+        batch_results.present? ? batch_results.sum : 0
       end
 
       def resolve_prune_method(prune_method)
